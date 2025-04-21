@@ -7,6 +7,9 @@ SNAKE_CHAR = 'O'
 HEAD_CHAR = '1'
 EMPTY_CHAR = ' '
 
+WIDTH = 20
+HEIGHT = 10
+
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
@@ -26,10 +29,12 @@ class Snake:
             self.body.pop()  # Xóa đuôi nếu không ăn
             return False
 
-    #TODO: Hiện thực hoá hàm kiểm tra va chạm
     def check_collision(self):
         # Kiểm tra va chạm với chính mình hoặc tường
-        return True
+        head = self.body[0]
+        return (head in self.body[1:] or
+                head[0] < 0 or head[0] >= WIDTH or
+                head[1] < 0 or head[1] >= HEIGHT)
     
 def main():
     # Tạo một con rắn với đối số mặc định
@@ -47,6 +52,27 @@ def main():
     snake2 = Snake([(5,5), (6,5), (7,5)], (-1, 0))
     print("\nRắn 2 - Vị trí khởi tạo:", snake2.body)
     print("Rắn 2 - Hướng di chuyển:", snake2.direction)
+
+    # Giả sử con rắn số 3 đang di chuyển xuống dưới và quẹo trái khiển nó va vào chính mình
+    snake3 = Snake([(6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7), (5, 8)])
+    # Trạng thái con rắn sau khi quẹo trái
+    snake3.body = [(5, 7), (6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7), (5, 8)]
+    print(snake3.check_collision()) # True
+    # Con rắn va vào tường trên
+    snake3.body = [(5, -1), (5, 0), (5, 1), (5, 2)]
+    print(snake3.check_collision()) # True
+    # Con rắn va vào tường dưới
+    snake3.body = [(5, HEIGHT), (5, HEIGHT-1), (5, HEIGHT-2)]
+    print(snake3.check_collision()) # True
+    # Con rắn va vào tường bên trái
+    snake3.body = [(2, -1), (2, 0), (2, 1), (2,2)]
+    print(snake3.check_collision()) # True
+    # Con rắn va vào tường bên phải
+    snake3.body = [(2, WIDTH), (2, WIDTH-1), (2, WIDTH-2), (2,WIDTH - 3)]
+    print(snake3.check_collision()) # True
+    # Con rắn không va vào đâu cả
+    snake3.body =  [(3, 4), (3, 5), (4, 5), (5, 5), (6, 5)]
+    print(snake3.check_collision()) # False
 
     # Lấy đầu con rắn
     print("Rắn 2 - Vị trí đầu rắn:", snake2.body[0])
