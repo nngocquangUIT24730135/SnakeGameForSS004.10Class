@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 # Cài đặt trò chơi
 SNAKE_CHAR = 'O'
@@ -82,9 +83,22 @@ class Game:
         print(WALL_CHAR * (WIDTH + 2))  # In tường dưới
         print(f"Điểm: {self.score}")  # In điểm số
 
-    #TODO Hiện thực hoá update trạng thái trò chơi sau khi di chuyển con rắn dưới dây
     def update_state(self):
-        # Cập nhật trạng thái trò chơi
+        # Di chuyển rắn
+        ate_food = self.snake.move(self.food.position)
+
+        # Kiểm tra va chạm
+        if self.snake.check_collision():
+            self.draw_board()  # Hiển thị trạng thái cuối
+            time.sleep(3)  # Tạm dừng 3 giây
+            self.game_over = True
+            return False  # Thoát vòng lặp chính
+
+        # Cập nhật nếu ăn thức ăn
+        if ate_food:
+            self.score += 1  # Tăng điểm
+            self.food.spawn(self.snake.body)  # Tạo thức ăn mới
+
         return True  # Tiếp tục vòng lặp chính
 
     #TODO Hiện thực hoá hàm xử lý khi người chơi ấn các phím
@@ -105,10 +119,11 @@ def main():
         if not game.update_state():
             break
 
+        time.sleep(0.2) # Tạm dừng 0.2 giây
 
     game.clear_screen()
     print("--------------------------------")
-    print(f"Trò chơi kết thúc! Điểm cuối: {state.score}")
+    print(f"Trò chơi kết thúc! Điểm cuối: {game.score}")
 
 
 if __name__ == "__main__":
