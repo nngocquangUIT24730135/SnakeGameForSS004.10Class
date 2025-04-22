@@ -1,7 +1,7 @@
 import os
 import random
 import time
-import keyboard
+from pynput import keyboard
 
 # Cài đặt trò chơi
 SNAKE_CHAR = 'O'
@@ -58,11 +58,13 @@ class Game:
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
         self.game_over = False  # Trạng thái kết thúc trò chơi
+        self.current_keys = set()  # Lưu trữ trạng thái phím
+        self.listener = None  # Listener cho pynput
 
     @staticmethod
     def clear_screen():
         # Xóa màn hình console
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system('clear')  # Sử dụng 'clear' cho macOS/Linux
 
     def draw_board(self):
         # Vẽ bảng trò chơi
@@ -103,44 +105,81 @@ class Game:
         return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self):
-        if keyboard.is_pressed('q'):
-            self.last_key = "q"
-            return False  # Thoát trò chơi
         current_dx, current_dy = self.snake.direction
-        if keyboard.is_pressed('up') and current_dy != 1:  # Ngăn di chuyển ngược lại
+        if 'q' in self.current_keys:
+            return False  # Thoát trò chơi
+        if 'up' in self.current_keys and current_dy != 1:  # Ngăn di chuyển ngược lại
             self.snake.direction = (0, -1)
-            self.last_key = "up"
-        elif keyboard.is_pressed('down') and current_dy != -1:
+        elif 'down' in self.current_keys and current_dy != -1:
             self.snake.direction = (0, 1)
-            self.last_key = "down"
-        elif keyboard.is_pressed('left') and current_dx != 1:
+        elif 'left' in self.current_keys and current_dx != 1:
             self.snake.direction = (-1, 0)
-            self.last_key = "left"
-        elif keyboard.is_pressed('right') and current_dx != -1:
+        elif 'right' in self.current_keys and current_dx != -1:
             self.snake.direction = (1, 0)
-            self.last_key = "right"
         return True  # Tiếp tục trò chơi
+
+    def on_press(self, key):
+        try:
+            if key == keyboard.Key.up:
+                self.current_keys.add('up')
+            elif key == keyboard.Key.down:
+                self.current_keys.add('down')
+            elif key == keyboard.Key.left:
+                self.current_keys.add('left')
+            elif key == keyboard.Key.right:
+                self.current_keys.add('right')
+            elif key == keyboard.KeyCode.from_char('q'):
+                self.current_keys.add('q')
+        except AttributeError:
+            pass
+
+    def on_release(self, key):
+        try:
+            if key == keyboard.Key.up:
+                self.current_keys.discard('up')
+            elif key == keyboard.Key.down:
+                self.current_keys.discard('down')
+            elif key == keyboard.Key.left:
+                self.current_keys.discard('left')
+            elif key == keyboard.Key.right:
+                self.current_keys.discard('right')
+            elif key == keyboard.KeyCode.from_char('q'):
+                self.current_keys.discard('q')
+        except AttributeError:
+            pass
+
+    def start_listener(self):
+        self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
+        self.listener.start()
+
+    def stop_listener(self):
+        if self.listener:
+            self.listener.stop()
 
 def main():
     game = Game()  # Khởi tạo trạng thái trò chơi
-    
-    while not game.game_over:
-        game.draw_board()  # Vẽ bảng trò chơi
+    game.start_listener()  # Bắt đầu lắng nghe phím
 
-        # Xử lý đầu vào
-        if not game.handle_input():
-            break
+    try:
+        while not game.game_over:
+            game.draw_board()  # Vẽ bảng trò chơi
 
-        # Cập nhật trạng thái trò chơi
-        if not game.update_state():
-            break
+            # Xử lý đầu vào
+            if not game.handle_input():
+                break
 
-        time.sleep(0.2) # Tạm dừng 0.2 giây
+            # Cập nhật trạng thái trò chơi
+            if not game.update_state():
+                break
+
+            time.sleep(0.2)  # Tạm dừng 0.2 giây
+
+    finally:
+        game.stop_listener()  # Dừng lắng nghe phím khi thoát
 
     game.clear_screen()
     print("--------------------------------")
     print(f"Trò chơi kết thúc! Điểm cuối: {game.score}")
-
 
 if __name__ == "__main__":
     try:
