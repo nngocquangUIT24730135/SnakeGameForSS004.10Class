@@ -6,6 +6,7 @@ import random
 SNAKE_CHAR = 'O'
 HEAD_CHAR = '1'
 EMPTY_CHAR = ' '
+FOOD_CHAR = '*'
 
 WIDTH = 20
 HEIGHT = 10
@@ -35,8 +36,22 @@ class Snake:
         return (head in self.body[1:] or
                 head[0] < 0 or head[0] >= WIDTH or
                 head[1] < 0 or head[1] >= HEIGHT)
-    
+
+class Food:
+    def __init__(self, initial_position=(10, 5)):
+        self.position = initial_position  # Vị trí thức ăn ban đầu
+
+    def spawn(self, snake_body):
+        # Tạo vị trí mới cho thức ăn
+        while True:
+            x = random.randint(0, WIDTH - 1)
+            y = random.randint(0, HEIGHT - 1)
+            if (x, y) not in snake_body:
+                self.position = (x, y)
+                break
+
 def main():
+
     # Tạo một con rắn với đối số mặc định
     snake = Snake()
     print("Rắn 1 - Vị trí khởi tạo:", snake.body)
@@ -56,7 +71,7 @@ def main():
     # Giả sử con rắn số 3 đang di chuyển xuống dưới và quẹo trái khiển nó va vào chính mình
     snake3 = Snake([(6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7), (5, 8)])
     # Trạng thái con rắn sau khi quẹo trái
-    snake3.body = [(5, 7), (6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7), (5, 8)]
+    snake3.body = [(5, 7), (6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7)]
     print(snake3.check_collision()) # True
     # Con rắn va vào tường trên
     snake3.body = [(5, -1), (5, 0), (5, 1), (5, 2)]
@@ -88,6 +103,20 @@ def main():
     # Con rắn sẽ ăn được thức ăn
     snake2.move(food_position=(3, 4)) 
     print("Con rắn hiện tại:", snake2.body) # [(3, 4), (3, 5), (4, 5), (5, 5), (6, 5)]
+
+    food = Food()
+    print(food.position)
+
+    body = [(1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9)]
+    food.spawn(body)
+    print(food.position)
+    for i in range(1, 10001):
+        food.spawn(body)
+        if (food.position in body):
+            # dòng dưới đây không bao giờ được in ra màn hình
+            print("Thức ăn không thể xuất hiện trong thân con rắn")
+            break;
+    print(food.position)
 
 
 if __name__ == "__main__":
