@@ -1,6 +1,7 @@
 import os
 import random
 import time
+import keyboard
 
 # Cài đặt trò chơi
 SNAKE_CHAR = 'O'
@@ -101,8 +102,23 @@ class Game:
 
         return True  # Tiếp tục vòng lặp chính
 
-    #TODO Hiện thực hoá hàm xử lý khi người chơi ấn các phím
     def handle_input(self):
+        if keyboard.is_pressed('q'):
+            self.last_key = "q"
+            return False  # Thoát trò chơi
+        current_dx, current_dy = self.snake.direction
+        if keyboard.is_pressed('up') and current_dy != 1:  # Ngăn di chuyển ngược lại
+            self.snake.direction = (0, -1)
+            self.last_key = "up"
+        elif keyboard.is_pressed('down') and current_dy != -1:
+            self.snake.direction = (0, 1)
+            self.last_key = "down"
+        elif keyboard.is_pressed('left') and current_dx != 1:
+            self.snake.direction = (-1, 0)
+            self.last_key = "left"
+        elif keyboard.is_pressed('right') and current_dx != -1:
+            self.snake.direction = (1, 0)
+            self.last_key = "right"
         return True  # Tiếp tục trò chơi
 
 def main():
