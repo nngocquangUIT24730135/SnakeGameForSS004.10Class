@@ -1,12 +1,12 @@
 import os
-import time
 import random
 
 # Cài đặt trò chơi
 SNAKE_CHAR = 'O'
 HEAD_CHAR = '1'
-EMPTY_CHAR = ' '
 FOOD_CHAR = '*'
+WALL_CHAR = '#'
+EMPTY_CHAR = ' '
 
 WIDTH = 20
 HEIGHT = 10
@@ -50,73 +50,51 @@ class Food:
                 self.position = (x, y)
                 break
 
+class Game:
+    def __init__(self):
+        self.snake = Snake()  # Khởi tạo rắn
+        self.food = Food()  # Khởi tạo thức ăn
+        self.score = 0  # Điểm số ban đầu
+        self.game_over = False  # Trạng thái kết thúc trò chơi
+
+    @staticmethod
+    def clear_screen():
+        # Xóa màn hình console
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+    #TODO Hiện thực hoá hàm vẽ khung trò chơi dưới đây
+    def draw_board(self):
+        # Vẽ bảng trò chơi
+        self.clear_screen()
+        print("ĐÂY LÀ MÀN HÌNH TRÒ CHƠI")
+
+    #TODO Hiện thực hoá update trạng thái trò chơi sau khi di chuyển con rắn dưới dây
+    def update_state(self):
+        # Cập nhật trạng thái trò chơi
+        return True  # Tiếp tục vòng lặp chính
+
+    #TODO Hiện thực hoá hàm xử lý khi người chơi ấn các phím
+    def handle_input(self):
+        return True  # Tiếp tục trò chơi
+
 def main():
+    game = Game()  # Khởi tạo trạng thái trò chơi
+    
+    while not game.game_over:
+        game.draw_board()  # Vẽ bảng trò chơi
 
-    # Tạo một con rắn với đối số mặc định
-    snake = Snake()
-    print("Rắn 1 - Vị trí khởi tạo:", snake.body)
-    print("Rắn 1 - Hướng di chuyển:", snake.direction)
+        # Xử lý đầu vào
+        if not game.handle_input():
+            break
 
-    # Kiểm tra thông tin về kiểu dữ liệu
-    print("\n[Kiểu dữ liệu]")
-    print("Kiểu snake.body:", type(snake.body))           # <class 'list'>
-    print("Kiểu phần tử đầu trong body:", type(snake.body[0]))  # <class 'tuple'>
-    print("Kiểu direction:", type(snake.direction))       # <class 'tuple'>
+        # Cập nhật trạng thái trò chơi
+        if not game.update_state():
+            break
 
-    # Tạo con rắn thứ 2 có độ dài là 3 và hướng di chuyển sang trái
-    snake2 = Snake([(5,5), (6,5), (7,5)], (-1, 0))
-    print("\nRắn 2 - Vị trí khởi tạo:", snake2.body)
-    print("Rắn 2 - Hướng di chuyển:", snake2.direction)
 
-    # Giả sử con rắn số 3 đang di chuyển xuống dưới và quẹo trái khiển nó va vào chính mình
-    snake3 = Snake([(6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7), (5, 8)])
-    # Trạng thái con rắn sau khi quẹo trái
-    snake3.body = [(5, 7), (6, 7), (6, 6), (6, 5), (5, 5), (5, 6), (5, 7)]
-    print(snake3.check_collision()) # True
-    # Con rắn va vào tường trên
-    snake3.body = [(5, -1), (5, 0), (5, 1), (5, 2)]
-    print(snake3.check_collision()) # True
-    # Con rắn va vào tường dưới
-    snake3.body = [(5, HEIGHT), (5, HEIGHT-1), (5, HEIGHT-2)]
-    print(snake3.check_collision()) # True
-    # Con rắn va vào tường bên trái
-    snake3.body = [(2, -1), (2, 0), (2, 1), (2,2)]
-    print(snake3.check_collision()) # True
-    # Con rắn va vào tường bên phải
-    snake3.body = [(2, WIDTH), (2, WIDTH-1), (2, WIDTH-2), (2,WIDTH - 3)]
-    print(snake3.check_collision()) # True
-    # Con rắn không va vào đâu cả
-    snake3.body =  [(3, 4), (3, 5), (4, 5), (5, 5), (6, 5)]
-    print(snake3.check_collision()) # False
-
-    # Lấy đầu con rắn
-    print("Rắn 2 - Vị trí đầu rắn:", snake2.body[0])
-
-    # Di chuyển con rắn thứ 2 theo hướng định sẵn
-    snake2.move(food_position=(3, 5))
-    print("Con rắn hiện tại:", snake2.body) # Con rắn hiện tại: [(4, 5), (5, 5), (6, 5)]
-    # Lần này con rắn sẽ ăn được thức ăn
-    snake2.move(food_position=(3, 5))
-    print("Con rắn hiện tại:", snake2.body) # [(3, 5), (4, 5), (5, 5), (6, 5)]
-    # Đổi hướng con rắn di chuyển lên trên
-    snake2.direction = (0, -1)
-    # Con rắn sẽ ăn được thức ăn
-    snake2.move(food_position=(3, 4)) 
-    print("Con rắn hiện tại:", snake2.body) # [(3, 4), (3, 5), (4, 5), (5, 5), (6, 5)]
-
-    food = Food()
-    print(food.position)
-
-    body = [(1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8), (1, 9)]
-    food.spawn(body)
-    print(food.position)
-    for i in range(1, 10001):
-        food.spawn(body)
-        if (food.position in body):
-            # dòng dưới đây không bao giờ được in ra màn hình
-            print("Thức ăn không thể xuất hiện trong thân con rắn")
-            break;
-    print(food.position)
+    game.clear_screen()
+    print("--------------------------------")
+    print(f"Trò chơi kết thúc! Điểm cuối: {state.score}")
 
 
 if __name__ == "__main__":
