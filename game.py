@@ -62,11 +62,25 @@ class Game:
         # Xóa màn hình console
         os.system('cls' if os.name == 'nt' else 'clear')
 
-    #TODO Hiện thực hoá hàm vẽ khung trò chơi dưới đây
     def draw_board(self):
         # Vẽ bảng trò chơi
         self.clear_screen()
-        print("ĐÂY LÀ MÀN HÌNH TRÒ CHƠI")
+        print(WALL_CHAR * (WIDTH + 2))  # In tường trên
+        for y in range(HEIGHT):
+            row = WALL_CHAR  # Bắt đầu hàng với tường
+            for x in range(WIDTH):
+                if (x, y) == self.snake.body[0]:
+                    row += HEAD_CHAR  # Vẽ đầu rắn
+                elif (x, y) in self.snake.body:
+                    row += SNAKE_CHAR  # Vẽ thân rắn
+                elif (x, y) == self.food.position:
+                    row += FOOD_CHAR  # Vẽ thức ăn
+                else:
+                    row += EMPTY_CHAR  # Vẽ ô trống
+            row += WALL_CHAR  # Kết thúc hàng với tường
+            print(row)
+        print(WALL_CHAR * (WIDTH + 2))  # In tường dưới
+        print(f"Điểm: {self.score}")  # In điểm số
 
     #TODO Hiện thực hoá update trạng thái trò chơi sau khi di chuyển con rắn dưới dây
     def update_state(self):
