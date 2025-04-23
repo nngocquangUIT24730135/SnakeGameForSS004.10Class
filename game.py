@@ -157,10 +157,26 @@ class Game:
             self.listener.stop()
 
 def main():
+    
+    def get_speed_choice():
+        print("Chọn tốc độ rắn:")
+        print("1. Chậm")
+        print("2. Bình thường")
+        print("3. Nhanh")
+        choice = input("Nhập lựa chọn (1/2/3): ")
+
+        if choice == '1':
+            return 2  # 5 FPS
+        elif choice == '2':
+            return  5 # 15 FPS
+        else:
+            return 7  # 10 FPS (default)
+
+    
     game = Game()
     game.start_listener()
 
-    FRAME_RATE = 60
+    FRAME_RATE = get_speed_choice()
     FRAME_TIME = 1.0 / FRAME_RATE
     last_time = time.perf_counter()
 
