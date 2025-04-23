@@ -12,7 +12,6 @@ EMPTY_CHAR = ' '
 
 WIDTH = 20
 HEIGHT = 10
-
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
@@ -157,25 +156,32 @@ class Game:
             self.listener.stop()
 
 def main():
-    game = Game()  # Khởi tạo trạng thái trò chơi
-    game.start_listener()  # Bắt đầu lắng nghe phím
+    game = Game()
+    game.start_listener()
+
+    FRAME_RATE = 60
+    FRAME_TIME = 1.0 / FRAME_RATE
+    last_time = time.perf_counter()
 
     try:
         while not game.game_over:
-            game.draw_board()  # Vẽ bảng trò chơi
+            game.draw_board()
 
-            # Xử lý đầu vào
             if not game.handle_input():
                 break
 
-            # Cập nhật trạng thái trò chơi
             if not game.update_state():
                 break
 
-            time.sleep(0.2)  # Tạm dừng 0.2 giây
+            # Delay để giữ FPS ổn định
+            now = time.perf_counter()
+            elapsed = now - last_time
+            if elapsed < FRAME_TIME:
+                time.sleep(FRAME_TIME - elapsed)
+            last_time = now
 
     finally:
-        game.stop_listener()  # Dừng lắng nghe phím khi thoát
+        game.stop_listener()
 
     game.clear_screen()
     print("--------------------------------")
