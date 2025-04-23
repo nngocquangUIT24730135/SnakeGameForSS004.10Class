@@ -1,8 +1,8 @@
 import os
 import random
 import time
-from pynput import keyboard
 import platform
+from pynput import keyboard
 
 # Cài đặt trò chơi
 SNAKE_CHAR = 'O'
@@ -13,6 +13,12 @@ EMPTY_CHAR = ' '
 
 WIDTH = 20
 HEIGHT = 10
+
+# Thông số tốc độ
+FRAME_RATE = 30
+FRAME_TIME = 1.0 / FRAME_RATE
+MOVES_PER_SECOND = 5
+FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
 
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
@@ -61,9 +67,11 @@ class Game:
         self.game_over = False  # Trạng thái kết thúc trò chơi
         self.current_keys = set()  # Lưu trữ trạng thái phím
         self.listener = None  # Listener cho pynput
+        self.frame_count = 0  # Đếm số khung hình để kiểm soát di chuyển
 
     @staticmethod
     def clear_screen():
+        # Xóa màn hình console
         if platform.system() == "Windows":
             os.system('cls')
         else:
@@ -90,24 +98,29 @@ class Game:
         print(f"Điểm: {self.score}")  # In điểm số
 
     def update_state(self):
-        # Di chuyển rắn
-        ate_food = self.snake.move(self.food.position)
+        # Cập nhật trạng thái trò chơi
+        self.frame_count += 1
+        if self.frame_count >= FRAMES_PER_MOVE:
+            self.frame_count = 0  # Reset bộ đếm
+            # Di chuyển rắn
+            ate_food = self.snake.move(self.food.position)
 
-        # Kiểm tra va chạm
-        if self.snake.check_collision():
-            self.draw_board()  # Hiển thị trạng thái cuối
-            time.sleep(3)  # Tạm dừng 3 giây
-            self.game_over = True
-            return False  # Thoát vòng lặp chính
+            # Kiểm tra va chạm
+            if self.snake.check_collision():
+                self.draw_board()  # Hiển thị trạng thái cuối
+                time.sleep(3)  # Tạm dừng 3 giây
+                self.game_over = True
+                return False  # Thoát vòng lặp chính
 
-        # Cập nhật nếu ăn thức ăn
-        if ate_food:
-            self.score += 1  # Tăng điểm
-            self.food.spawn(self.snake.body)  # Tạo thức ăn mới
+            # Cập nhật nếu ăn thức ăn
+            if ate_food:
+                self.score += 1  # Tăng điểm
+                self.food.spawn(self.snake.body)  # Tạo thức ăn mới
 
         return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self):
+        # Xử lý input từ người chơi
         current_dx, current_dy = self.snake.direction
         if 'q' in self.current_keys:
             return False  # Thoát trò chơi
@@ -122,6 +135,7 @@ class Game:
         return True  # Tiếp tục trò chơi
 
     def on_press(self, key):
+        # Xử lý sự kiện nhấn phím
         try:
             if key == keyboard.Key.up:
                 self.current_keys.add('up')
@@ -137,6 +151,7 @@ class Game:
             pass
 
     def on_release(self, key):
+        # Xử lý sự kiện thả phím
         try:
             if key == keyboard.Key.up:
                 self.current_keys.discard('up')
@@ -152,10 +167,12 @@ class Game:
             pass
 
     def start_listener(self):
+        # Bắt đầu lắng nghe sự kiện phím
         self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
         self.listener.start()
 
     def stop_listener(self):
+        # Dừng lắng nghe sự kiện phím
         if self.listener:
             self.listener.stop()
 
@@ -163,8 +180,6 @@ def main():
     game = Game()
     game.start_listener()
 
-    FRAME_RATE = 60
-    FRAME_TIME = 1.0 / FRAME_RATE
     last_time = time.perf_counter()
 
     try:
