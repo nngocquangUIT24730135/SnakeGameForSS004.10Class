@@ -12,6 +12,7 @@ EMPTY_CHAR = ' '
 
 WIDTH = 20
 HEIGHT = 10
+
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
