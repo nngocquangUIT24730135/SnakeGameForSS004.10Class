@@ -1,6 +1,7 @@
 import os
 import random
 import time
+import platform
 from pynput import keyboard
 
 # Cài đặt trò chơi
@@ -12,6 +13,12 @@ EMPTY_CHAR = ' '
 
 WIDTH = 20
 HEIGHT = 10
+
+# Thông số tốc độ
+FRAME_RATE = 30
+FRAME_TIME = 1.0 / FRAME_RATE
+MOVES_PER_SECOND = 5
+FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
 
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
@@ -60,11 +67,15 @@ class Game:
         self.game_over = False  # Trạng thái kết thúc trò chơi
         self.current_keys = set()  # Lưu trữ trạng thái phím
         self.listener = None  # Listener cho pynput
+        self.frame_count = 0  # Đếm số khung hình để kiểm soát di chuyển
 
     @staticmethod
     def clear_screen():
         # Xóa màn hình console
-        os.system('clear')  # Sử dụng 'clear' cho macOS/Linux
+        if platform.system() == "Windows":
+            os.system('cls')
+        else:
+            os.system('clear')
 
     def draw_board(self):
         # Vẽ bảng trò chơi
@@ -87,24 +98,29 @@ class Game:
         print(f"Điểm: {self.score}")  # In điểm số
 
     def update_state(self):
-        # Di chuyển rắn
-        ate_food = self.snake.move(self.food.position)
+        # Cập nhật trạng thái trò chơi
+        self.frame_count += 1
+        if self.frame_count >= FRAMES_PER_MOVE:
+            self.frame_count = 0  # Reset bộ đếm
+            # Di chuyển rắn
+            ate_food = self.snake.move(self.food.position)
 
-        # Kiểm tra va chạm
-        if self.snake.check_collision():
-            self.draw_board()  # Hiển thị trạng thái cuối
-            time.sleep(3)  # Tạm dừng 3 giây
-            self.game_over = True
-            return False  # Thoát vòng lặp chính
+            # Kiểm tra va chạm
+            if self.snake.check_collision():
+                self.draw_board()  # Hiển thị trạng thái cuối
+                time.sleep(3)  # Tạm dừng 3 giây
+                self.game_over = True
+                return False  # Thoát vòng lặp chính
 
-        # Cập nhật nếu ăn thức ăn
-        if ate_food:
-            self.score += 1  # Tăng điểm
-            self.food.spawn(self.snake.body)  # Tạo thức ăn mới
+            # Cập nhật nếu ăn thức ăn
+            if ate_food:
+                self.score += 1  # Tăng điểm
+                self.food.spawn(self.snake.body)  # Tạo thức ăn mới
 
         return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self):
+        # Xử lý input từ người chơi
         current_dx, current_dy = self.snake.direction
         if 'q' in self.current_keys:
             return False  # Thoát trò chơi
@@ -119,6 +135,7 @@ class Game:
         return True  # Tiếp tục trò chơi
 
     def on_press(self, key):
+        # Xử lý sự kiện nhấn phím
         try:
             if key == keyboard.Key.up:
                 self.current_keys.add('up')
@@ -134,6 +151,7 @@ class Game:
             pass
 
     def on_release(self, key):
+        # Xử lý sự kiện thả phím
         try:
             if key == keyboard.Key.up:
                 self.current_keys.discard('up')
@@ -149,33 +167,40 @@ class Game:
             pass
 
     def start_listener(self):
+        # Bắt đầu lắng nghe sự kiện phím
         self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
         self.listener.start()
 
     def stop_listener(self):
+        # Dừng lắng nghe sự kiện phím
         if self.listener:
             self.listener.stop()
 
 def main():
-    game = Game()  # Khởi tạo trạng thái trò chơi
-    game.start_listener()  # Bắt đầu lắng nghe phím
+    game = Game()
+    game.start_listener()
+
+    last_time = time.perf_counter()
 
     try:
         while not game.game_over:
-            game.draw_board()  # Vẽ bảng trò chơi
+            game.draw_board()
 
-            # Xử lý đầu vào
             if not game.handle_input():
                 break
 
-            # Cập nhật trạng thái trò chơi
             if not game.update_state():
                 break
 
-            time.sleep(0.2)  # Tạm dừng 0.2 giây
+            # Delay để giữ FPS ổn định
+            now = time.perf_counter()
+            elapsed = now - last_time
+            if elapsed < FRAME_TIME:
+                time.sleep(FRAME_TIME - elapsed)
+            last_time = now
 
     finally:
-        game.stop_listener()  # Dừng lắng nghe phím khi thoát
+        game.stop_listener()
 
     game.clear_screen()
     print("--------------------------------")
