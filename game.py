@@ -39,13 +39,16 @@ MOVES_PER_SECOND = 5
 FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
 
 class Snake:
-    def __init__(self, body=[(5, 5)], direction=(1, 0)):
+    def __init__(self, body=[(6, 9), (5, 9), (4, 9)], direction=(1, 0)):
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
-        self.direction = direction       # Hướng di chuyển ban đầu
+        self.direction = direction # Hướng di chuyển ban đầu
 
     def draw(self):
-        #TODO: viết hàm vẽ con rắn trên canvas
-        return None;
+        for index, segment in enumerate(self.body):
+            x, y = segment
+            segment_rect = (OFFSET + x * cell_size, OFFSET+ y * cell_size, cell_size, cell_size)
+            color = HEAD_COLOR if index == 0 else DARK_GREEN
+            pygame.draw.rect(screen, color, segment_rect, 0, 7)
 
     def move(self, food_position):
         # Di chuyển rắn
@@ -113,10 +116,6 @@ class Game:
         score_surface = score_font.render(str(self.score), True, DARK_GREEN)
         screen.blit(title_surface, (OFFSET-5, 20))
         screen.blit(score_surface, (OFFSET-5, OFFSET + cell_size*number_of_cells + 10))
-        
-        if self.state == "STOPPED":
-            self.draw_popup()
-        
         pygame.display.update()
         clock.tick(60)
     
