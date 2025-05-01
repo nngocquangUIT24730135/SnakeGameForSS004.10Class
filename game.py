@@ -104,9 +104,21 @@ class Game:
             os.system('clear')
 
     def draw_board(self):
-        # Vẽ bảng trò chơi
-        #TODO: Cần được implement lại
-        return None
+        screen.fill(GREEN)
+        pygame.draw.rect(screen, DARK_GREEN, 
+            (OFFSET-5, OFFSET-5, cell_size*number_of_cells + 10, cell_size*number_of_cells + 10), 5)
+        self.snake.draw()
+        self.food.draw()
+        title_surface = title_font.render("Snake loves money", True, DARK_GREEN)
+        score_surface = score_font.render(str(self.score), True, DARK_GREEN)
+        screen.blit(title_surface, (OFFSET-5, 20))
+        screen.blit(score_surface, (OFFSET-5, OFFSET + cell_size*number_of_cells + 10))
+        
+        if self.state == "STOPPED":
+            self.draw_popup()
+        
+        pygame.display.update()
+        clock.tick(60)
     
     def update_state(self):
         # Cập nhật trạng thái trò chơi
