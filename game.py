@@ -76,8 +76,10 @@ class Food:
         self.position = initial_position  # Vị trí thức ăn ban đầu
 
     def draw(self):
-        #TODO: viết hàm vẽ đồ ăn trên canvas
-        return None
+        x, y = self.position
+        food_rect = pygame.Rect(OFFSET + x * cell_size, OFFSET + y * cell_size, 
+            cell_size, cell_size)
+        screen.blit(food_surface, food_rect)
 
     def spawn(self, snake_body):
         # Tạo vị trí mới cho thức ăn
