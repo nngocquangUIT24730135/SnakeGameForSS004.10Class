@@ -85,8 +85,17 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
+<<<<<<< Updated upstream
         self.game_over = False  # Trạng thái kết thúc trò chơi                self.draw_board()  # Hiển thị trạng thái cuối
         
+=======
+<<<<<<< HEAD
+        self.game_over = False  # Trạng thái kết thúc trò chơi                     
+=======
+        self.game_over = False  # Trạng thái kết thúc trò chơi                self.draw_board()  # Hiển thị trạng thái cuối
+        
+>>>>>>> 249c7a23f3fe75245bdb37183c71dfbedb387295
+>>>>>>> Stashed changes
 
     def draw_board(self):
         screen.fill(GREEN)
@@ -118,8 +127,23 @@ class Game:
         return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self, event):
+<<<<<<< HEAD
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP and self.snake.direction != (0, 1):
+                self.snake.direction = (0, -1)
+            if event.key == pygame.K_DOWN and self.snake.direction != (0, -1):
+                self.snake.direction = (0, 1)
+            if event.key == pygame.K_LEFT and self.snake.direction != (1, 0):
+                self.snake.direction = (-1, 0)
+            if event.key == pygame.K_RIGHT and self.snake.direction != (-1, 0):
+                self.snake.direction = (1, 0)
+=======
         #TODO: cần được implement lại
         return None
+<<<<<<< Updated upstream
+=======
+>>>>>>> 249c7a23f3fe75245bdb37183c71dfbedb387295
+>>>>>>> Stashed changes
 
 def main():
     game = Game()  # Khởi tạo trạng thái trò chơi
