@@ -1,8 +1,4 @@
-import os
 import random
-import time
-import platform
-from pynput import keyboard
 import pygame
 import sys 
 
@@ -31,12 +27,6 @@ pygame.time.set_timer(SNAKE_UPDATE, 200)
 screen = pygame.display.set_mode((2*OFFSET + cell_size*number_of_cells, 2*OFFSET + cell_size*number_of_cells))
 pygame.display.set_caption("Snake loves money")
 clock = pygame.time.Clock() 
-
-# Thông số tốc độ
-FRAME_RATE = 30
-FRAME_TIME = 1.0 / FRAME_RATE
-MOVES_PER_SECOND = 5
-FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
 
 class Snake:
     def __init__(self, body=[(6, 9), (5, 9), (4, 9)], direction=(1, 0)):
@@ -95,18 +85,8 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
-        self.game_over = False  # Trạng thái kết thúc trò chơi
-        self.current_keys = set()  # Lưu trữ trạng thái phím
-        self.listener = None  # Listener cho pynput
-        self.frame_count = 0  # Đếm số khung hình để kiểm soát di chuyển
-
-    @staticmethod
-    def clear_screen():
-        # Xóa màn hình console
-        if platform.system() == "Windows":
-            os.system('cls')
-        else:
-            os.system('clear')
+        self.game_over = False  # Trạng thái kết thúc trò chơi                self.draw_board()  # Hiển thị trạng thái cuối
+        
 
     def draw_board(self):
         screen.fill(GREEN)
@@ -122,72 +102,24 @@ class Game:
         clock.tick(60)
     
     def update_state(self):
-        # Cập nhật trạng thái trò chơi
-        self.frame_count += 1
-        if self.frame_count >= FRAMES_PER_MOVE:
-            self.frame_count = 0  # Reset bộ đếm
-            # Di chuyển rắn
-            ate_food = self.snake.move(self.food.position)
+        # Di chuyển rắn
+        ate_food = self.snake.move(self.food.position)
 
-            # Kiểm tra va chạm
-            if self.snake.check_collision():
-                self.draw_board()  # Hiển thị trạng thái cuối
-                time.sleep(3)  # Tạm dừng 3 giây
-                self.game_over = True
-                return False  # Thoát vòng lặp chính
+        # Kiểm tra va chạm
+        if self.snake.check_collision():
+            self.game_over = True
+            return False  # Thoát vòng lặp chính
 
-            # Cập nhật nếu ăn thức ăn
-            if ate_food:
-                self.score += 1  # Tăng điểm
-                self.food.spawn(self.snake.body)  # Tạo thức ăn mới
+        # Cập nhật nếu ăn thức ăn
+        if ate_food:
+            self.score += 1  # Tăng điểm
+            self.food.spawn(self.snake.body)  # Tạo thức ăn mới
 
         return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self, event):
         #TODO: cần được implement lại
         return None
-
-    def on_press(self, key):
-        # Xử lý sự kiện nhấn phím
-        try:
-            if key == keyboard.Key.up:
-                self.current_keys.add('up')
-            elif key == keyboard.Key.down:
-                self.current_keys.add('down')
-            elif key == keyboard.Key.left:
-                self.current_keys.add('left')
-            elif key == keyboard.Key.right:
-                self.current_keys.add('right')
-            elif key == keyboard.KeyCode.from_char('q'):
-                self.current_keys.add('q')
-        except AttributeError:
-            pass
-
-    def on_release(self, key):
-        # Xử lý sự kiện thả phím
-        try:
-            if key == keyboard.Key.up:
-                self.current_keys.discard('up')
-            elif key == keyboard.Key.down:
-                self.current_keys.discard('down')
-            elif key == keyboard.Key.left:
-                self.current_keys.discard('left')
-            elif key == keyboard.Key.right:
-                self.current_keys.discard('right')
-            elif key == keyboard.KeyCode.from_char('q'):
-                self.current_keys.discard('q')
-        except AttributeError:
-            pass
-
-    def start_listener(self):
-        # Bắt đầu lắng nghe sự kiện phím
-        self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
-        self.listener.start()
-
-    def stop_listener(self):
-        # Dừng lắng nghe sự kiện phím
-        if self.listener:
-            self.listener.stop()
 
 def main():
     game = Game()  # Khởi tạo trạng thái trò chơi
