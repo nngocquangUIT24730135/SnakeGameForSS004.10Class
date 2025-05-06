@@ -33,6 +33,10 @@ class Snake:
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
         self.direction = direction # Hướng di chuyển ban đầu
 
+    def reset(self):
+         self.body = [(6, 9), (5, 9), (4, 9)]
+         self.direction = (1, 0)
+
     def draw(self):
         for index, segment in enumerate(self.body):
             x, y = segment
@@ -85,7 +89,13 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
-        self.game_over = False  # Trạng thái kết thúc trò chơi                     
+        self.state = "STOPPED" # Trạng thái kết thúc trò chơi                     
+
+    def game_over(self):
+         self.snake.reset()
+         self.food.spawn(self.snake.body)
+         self.state = "STOPPED"
+         wall_hit_sound.play()
 
     def draw_board(self):
         screen.fill(GREEN)
@@ -106,15 +116,13 @@ class Game:
 
         # Kiểm tra va chạm
         if self.snake.check_collision():
-            self.game_over = True
-            return False  # Thoát vòng lặp chính
+            self.draw_board()  
+            self.game_over() # Thoát vòng lặp chính
 
         # Cập nhật nếu ăn thức ăn
         if ate_food:
             self.score += 1  # Tăng điểm
             self.food.spawn(self.snake.body)  # Tạo thức ăn mới
-
-        return True  # Tiếp tục vòng lặp chính
 
     def handle_input(self, event):
         if event.type == pygame.KEYDOWN:
