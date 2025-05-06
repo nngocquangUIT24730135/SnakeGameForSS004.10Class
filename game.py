@@ -34,8 +34,8 @@ class Snake:
         self.direction = direction # Hướng di chuyển ban đầu
 
     def reset(self):
-         self.body = [(6, 9), (5, 9), (4, 9)]
-         self.direction = (1, 0)
+        self.body = [(6, 9), (5, 9), (4, 9)]
+        self.direction = (1, 0)
 
     def draw(self):
         for index, segment in enumerate(self.body):
@@ -89,13 +89,39 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
-        self.state = "STOPPED" # Trạng thái kết thúc trò chơi                     
+        self.state = "STOPPED"  # Trạng thái trò chơi                     
 
     def game_over(self):
-         self.snake.reset()
-         self.food.spawn(self.snake.body)
-         self.state = "STOPPED"
-         wall_hit_sound.play()
+        self.snake.reset()
+        self.food.spawn(self.snake.body)
+        self.state = "STOPPED"
+        wall_hit_sound.play()
+        
+    def draw_popup(self):
+        # Tính toán kích thước cửa sổ bật lên
+        window_size = 2 * OFFSET + cell_size * number_of_cells
+        popup_width = int(window_size * 2 / 3)  # ~600 pixels
+        popup_height = int(window_size * 0.35)  # ~315 pixels
+
+        # Lớp phủ bán trong suốt
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))
+        screen.blit(overlay, (0, 0))
+
+        # Nền cửa sổ bật lên
+        popup_rect = pygame.Rect(
+            (window_size - popup_width) // 2,
+            (window_size - popup_height) // 2,
+            popup_width,
+            popup_height
+        )
+        pygame.draw.rect(screen, GREEN, popup_rect, 0, 10)
+        pygame.draw.rect(screen, DARK_GREEN, popup_rect, 5, 10)
+
+        # Màn hình bắt đầu ban đầu
+        start_text = popup_font.render("Press SPACE to Start", True, DARK_GREEN)
+        start_rect = start_text.get_rect(center=(window_size // 2, window_size // 2))
+        screen.blit(start_text, start_rect)
 
     def draw_board(self):
         screen.fill(GREEN)
@@ -107,6 +133,10 @@ class Game:
         score_surface = score_font.render(str(self.score), True, DARK_GREEN)
         screen.blit(title_surface, (OFFSET-5, 20))
         screen.blit(score_surface, (OFFSET-5, OFFSET + cell_size*number_of_cells + 10))
+        
+        if self.state == "STOPPED":
+            self.draw_popup()
+        
         pygame.display.update()
         clock.tick(60)
     
@@ -117,7 +147,7 @@ class Game:
         # Kiểm tra va chạm
         if self.snake.check_collision():
             self.draw_board()  
-            self.game_over() # Thoát vòng lặp chính
+            self.game_over()
 
         # Cập nhật nếu ăn thức ăn
         if ate_food:
@@ -126,6 +156,10 @@ class Game:
 
     def handle_input(self, event):
         if event.type == pygame.KEYDOWN:
+            if self.state == "STOPPED" and event.key == pygame.K_SPACE:
+                self.state = "RUNNING"
+                self.game_started = True  # Đánh dấu trò chơi đã bắt đầu
+                self.score = 0  # Đặt lại điểm số khi bắt đầu trò chơi mới
             if event.key == pygame.K_UP and self.snake.direction != (0, 1):
                 self.snake.direction = (0, -1)
             if event.key == pygame.K_DOWN and self.snake.direction != (0, -1):
