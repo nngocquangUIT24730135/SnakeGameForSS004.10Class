@@ -141,6 +141,9 @@ class Game:
         clock.tick(60)
     
     def update_state(self):
+        if self.state == "STOPPED":
+            return None
+        
         # Di chuyển rắn
         ate_food = self.snake.move(self.food.position)
 
@@ -158,7 +161,6 @@ class Game:
         if event.type == pygame.KEYDOWN:
             if self.state == "STOPPED" and event.key == pygame.K_SPACE:
                 self.state = "RUNNING"
-                self.game_started = True  # Đánh dấu trò chơi đã bắt đầu
                 self.score = 0  # Đặt lại điểm số khi bắt đầu trò chơi mới
             if event.key == pygame.K_UP and self.snake.direction != (0, 1):
                 self.snake.direction = (0, -1)
