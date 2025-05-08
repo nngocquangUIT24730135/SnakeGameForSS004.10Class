@@ -1,29 +1,49 @@
-import os
+
 import random
-import time
-import platform
-from pynput import keyboard
+import pygame
+import sys 
 
-# Cài đặt trò chơi
-SNAKE_CHAR = 'O'
-HEAD_CHAR = '1'
-FOOD_CHAR = '*'
-WALL_CHAR = '#'
-EMPTY_CHAR = ' '
+# Khởi tạo pygame
+pygame.init()
 
-WIDTH = 20
-HEIGHT = 10
+title_font = pygame.font.Font(None, 40)
+score_font = pygame.font.Font(None, 40)
+popup_font = pygame.font.Font(None, 40)
 
-# Thông số tốc độ
-FRAME_RATE = 30
-FRAME_TIME = 1.0 / FRAME_RATE
-MOVES_PER_SECOND = 5
-FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
+GREEN = (80, 200, 120)
+DARK_GREEN = (6, 64, 43)
+HEAD_COLOR = (45, 104, 196)
+
+cell_size = 30
+number_of_cells = 15
+WIDTH = number_of_cells
+HEIGHT = number_of_cells
+
+OFFSET = 75
+eat_sound = pygame.mixer.Sound("Sounds/eat.mp3")
+wall_hit_sound = pygame.mixer.Sound("Sounds/wall.mp3")
+food_surface = pygame.image.load("Graphics/food.png")
+SNAKE_UPDATE = pygame.USEREVENT
+pygame.time.set_timer(SNAKE_UPDATE, 200)
+screen = pygame.display.set_mode((2*OFFSET + cell_size*number_of_cells, 2*OFFSET + cell_size*number_of_cells))
+pygame.display.set_caption("Snake loves money")
+clock = pygame.time.Clock() 
 
 class Snake:
-    def __init__(self, body=[(5, 5)], direction=(1, 0)):
+    def __init__(self, body=[(6, 9), (5, 9), (4, 9)], direction=(1, 0)):
         self.body = body           # Khởi tạo thân rắn với vị trí đầu tiên
-        self.direction = direction       # Hướng di chuyển ban đầu
+        self.direction = direction # Hướng di chuyển ban đầu
+
+    def reset(self):
+        self.body = [(6, 9), (5, 9), (4, 9)]
+        self.direction = (1, 0)
+
+    def draw(self):
+        for index, segment in enumerate(self.body):
+            x, y = segment
+            segment_rect = (OFFSET + x * cell_size, OFFSET+ y * cell_size, cell_size, cell_size)
+            color = HEAD_COLOR if index == 0 else DARK_GREEN
+            pygame.draw.rect(screen, color, segment_rect, 0, 7)
 
     def move(self, food_position):
         # Di chuyển rắn
@@ -50,6 +70,12 @@ class Food:
     def __init__(self, initial_position=(10, 5)):
         self.position = initial_position  # Vị trí thức ăn ban đầu
 
+    def draw(self):
+        x, y = self.position
+        food_rect = pygame.Rect(OFFSET + x * cell_size, OFFSET + y * cell_size, 
+            cell_size, cell_size)
+        screen.blit(food_surface, food_rect)
+
     def spawn(self, snake_body):
         # Tạo vị trí mới cho thức ăn
         while True:
@@ -64,147 +90,119 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
-        self.game_over = False  # Trạng thái kết thúc trò chơi
-        self.current_keys = set()  # Lưu trữ trạng thái phím
-        self.listener = None  # Listener cho pynput
-        self.frame_count = 0  # Đếm số khung hình để kiểm soát di chuyển
+        self.state = "STOPPED"  # Trạng thái trò chơi 
+        self.game_started = False                    
 
-    @staticmethod
-    def clear_screen():
-        # Xóa màn hình console
-        if platform.system() == "Windows":
-            os.system('cls')
+    def game_over(self):
+        self.snake.reset()
+        self.food.spawn(self.snake.body)
+        self.state = "STOPPED"
+        wall_hit_sound.play()
+        
+    def draw_popup(self):
+        # Tính toán kích thước cửa sổ bật lên
+        window_size = 2 * OFFSET + cell_size * number_of_cells
+        popup_width = int(window_size * 2 / 3)  # ~600 pixels
+        popup_height = int(window_size * 0.35)  # ~315 pixels
+
+        # Lớp phủ bán trong suốt
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 128))
+        screen.blit(overlay, (0, 0))
+
+        # Nền cửa sổ bật lên
+        popup_rect = pygame.Rect(
+            (window_size - popup_width) // 2,
+            (window_size - popup_height) // 2,
+            popup_width,
+            popup_height
+        )
+        pygame.draw.rect(screen, GREEN, popup_rect, 0, 10)
+        pygame.draw.rect(screen, DARK_GREEN, popup_rect, 5, 10)
+
+        # Văn bản dựa trên trạng thái trò chơi
+        if not self.game_started:
+            # Màn hình bắt đầu ban đầu
+            start_text = popup_font.render("Press SPACE to Start", True, DARK_GREEN)
+            start_rect = start_text.get_rect(center=(window_size // 2, window_size // 2))
+            screen.blit(start_text, start_rect)
         else:
-            os.system('clear')
+            # Màn hình Kết thúc trò chơi
+            game_over_text = popup_font.render("Game Over", True, DARK_GREEN)
+            score_text = popup_font.render(f"Score: {self.score}", True, DARK_GREEN)
+            play_again_text = popup_font.render("Press SPACE to Play Again", True, DARK_GREEN)
+
+            game_over_rect = game_over_text.get_rect(center=(window_size // 2, window_size // 2 - 2 * cell_size))
+            score_rect = score_text.get_rect(center=(window_size // 2, window_size // 2))
+            play_again_rect = play_again_text.get_rect(center=(window_size // 2, window_size // 2 + 2 * cell_size))
+
+            screen.blit(game_over_text, game_over_rect)
+            screen.blit(score_text, score_rect)
+            screen.blit(play_again_text, play_again_rect)
 
     def draw_board(self):
-        # Vẽ bảng trò chơi
-        self.clear_screen()
-        print(WALL_CHAR * (WIDTH + 2))  # In tường trên
-        for y in range(HEIGHT):
-            row = WALL_CHAR  # Bắt đầu hàng với tường
-            for x in range(WIDTH):
-                if (x, y) == self.snake.body[0]:
-                    row += HEAD_CHAR  # Vẽ đầu rắn
-                elif (x, y) in self.snake.body:
-                    row += SNAKE_CHAR  # Vẽ thân rắn
-                elif (x, y) == self.food.position:
-                    row += FOOD_CHAR  # Vẽ thức ăn
-                else:
-                    row += EMPTY_CHAR  # Vẽ ô trống
-            row += WALL_CHAR  # Kết thúc hàng với tường
-            print(row)
-        print(WALL_CHAR * (WIDTH + 2))  # In tường dưới
-        print(f"Điểm: {self.score}")  # In điểm số
-
+        screen.fill(GREEN)
+        pygame.draw.rect(screen, DARK_GREEN, 
+            (OFFSET-5, OFFSET-5, cell_size*number_of_cells + 10, cell_size*number_of_cells + 10), 5)
+        self.snake.draw()
+        self.food.draw()
+        title_surface = title_font.render("Snake loves money", True, DARK_GREEN)
+        score_surface = score_font.render(str(self.score), True, DARK_GREEN)
+        screen.blit(title_surface, (OFFSET-5, 20))
+        screen.blit(score_surface, (OFFSET-5, OFFSET + cell_size*number_of_cells + 10))
+        
+        if self.state == "STOPPED":
+            self.draw_popup()
+        
+        pygame.display.update()
+        clock.tick(60)
+    
     def update_state(self):
-        # Cập nhật trạng thái trò chơi
-        self.frame_count += 1
-        if self.frame_count >= FRAMES_PER_MOVE:
-            self.frame_count = 0  # Reset bộ đếm
-            # Di chuyển rắn
-            ate_food = self.snake.move(self.food.position)
+        if self.state == "STOPPED":
+            return None
+        
+        # Di chuyển rắn
+        ate_food = self.snake.move(self.food.position)
 
-            # Kiểm tra va chạm
-            if self.snake.check_collision():
-                self.draw_board()  # Hiển thị trạng thái cuối
-                time.sleep(3)  # Tạm dừng 3 giây
-                self.game_over = True
-                return False  # Thoát vòng lặp chính
+        # Kiểm tra va chạm
+        if self.snake.check_collision():
+            self.draw_board()  
+            self.game_over()
 
-            # Cập nhật nếu ăn thức ăn
-            if ate_food:
-                self.score += 1  # Tăng điểm
-                self.food.spawn(self.snake.body)  # Tạo thức ăn mới
+        # Cập nhật nếu ăn thức ăn
+        if ate_food:
+            self.score += 1  # Tăng điểm
+            self.food.spawn(self.snake.body)  # Tạo thức ăn mới
 
-        return True  # Tiếp tục vòng lặp chính
-
-    def handle_input(self):
-        # Xử lý input từ người chơi
-        current_dx, current_dy = self.snake.direction
-        if 'q' in self.current_keys:
-            return False  # Thoát trò chơi
-        if 'up' in self.current_keys and current_dy != 1:  # Ngăn di chuyển ngược lại
-            self.snake.direction = (0, -1)
-        elif 'down' in self.current_keys and current_dy != -1:
-            self.snake.direction = (0, 1)
-        elif 'left' in self.current_keys and current_dx != 1:
-            self.snake.direction = (-1, 0)
-        elif 'right' in self.current_keys and current_dx != -1:
-            self.snake.direction = (1, 0)
-        return True  # Tiếp tục trò chơi
-
-    def on_press(self, key):
-        # Xử lý sự kiện nhấn phím
-        try:
-            if key == keyboard.Key.up:
-                self.current_keys.add('up')
-            elif key == keyboard.Key.down:
-                self.current_keys.add('down')
-            elif key == keyboard.Key.left:
-                self.current_keys.add('left')
-            elif key == keyboard.Key.right:
-                self.current_keys.add('right')
-            elif key == keyboard.KeyCode.from_char('q'):
-                self.current_keys.add('q')
-        except AttributeError:
-            pass
-
-    def on_release(self, key):
-        # Xử lý sự kiện thả phím
-        try:
-            if key == keyboard.Key.up:
-                self.current_keys.discard('up')
-            elif key == keyboard.Key.down:
-                self.current_keys.discard('down')
-            elif key == keyboard.Key.left:
-                self.current_keys.discard('left')
-            elif key == keyboard.Key.right:
-                self.current_keys.discard('right')
-            elif key == keyboard.KeyCode.from_char('q'):
-                self.current_keys.discard('q')
-        except AttributeError:
-            pass
-
-    def start_listener(self):
-        # Bắt đầu lắng nghe sự kiện phím
-        self.listener = keyboard.Listener(on_press=self.on_press, on_release=self.on_release)
-        self.listener.start()
-
-    def stop_listener(self):
-        # Dừng lắng nghe sự kiện phím
-        if self.listener:
-            self.listener.stop()
+    def handle_input(self, event):
+        if event.type == pygame.KEYDOWN:
+            if self.state == "STOPPED" and event.key == pygame.K_SPACE:
+                self.state = "RUNNING"
+                self.game_started = True  # Đánh dấu trò chơi đã bắt đầu
+                self.score = 0  # Đặt lại điểm số khi bắt đầu trò chơi mới
+            if event.key == pygame.K_UP and self.snake.direction != (0, 1):
+                self.snake.direction = (0, -1)
+            if event.key == pygame.K_DOWN and self.snake.direction != (0, -1):
+                self.snake.direction = (0, 1)
+            if event.key == pygame.K_LEFT and self.snake.direction != (1, 0):
+                self.snake.direction = (-1, 0)
+            if event.key == pygame.K_RIGHT and self.snake.direction != (-1, 0):
+                self.snake.direction = (1, 0)
 
 def main():
-    game = Game()
-    game.start_listener()
+    game = Game()  # Khởi tạo trạng thái trò chơi
+    
+    while True:
+        game.draw_board()  # Vẽ bảng trò chơi
+        for event in pygame.event.get():
+            if event.type == SNAKE_UPDATE:
+                game.update_state()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
-    last_time = time.perf_counter()
-
-    try:
-        while not game.game_over:
-            game.draw_board()
-
-            if not game.handle_input():
-                break
-
-            if not game.update_state():
-                break
-
-            # Delay để giữ FPS ổn định
-            now = time.perf_counter()
-            elapsed = now - last_time
-            if elapsed < FRAME_TIME:
-                time.sleep(FRAME_TIME - elapsed)
-            last_time = now
-
-    finally:
-        game.stop_listener()
-
-    game.clear_screen()
-    print("--------------------------------")
-    print(f"Trò chơi kết thúc! Điểm cuối: {game.score}")
+            # Xử lý đầu vào
+            game.handle_input(event)
 
 if __name__ == "__main__":
     try:
