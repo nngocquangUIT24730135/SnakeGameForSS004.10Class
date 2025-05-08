@@ -1,3 +1,4 @@
+
 import random
 import pygame
 import sys 
@@ -89,7 +90,8 @@ class Game:
         self.snake = Snake()  # Khởi tạo rắn
         self.food = Food()  # Khởi tạo thức ăn
         self.score = 0  # Điểm số ban đầu
-        self.state = "STOPPED"  # Trạng thái trò chơi                     
+        self.state = "STOPPED"  # Trạng thái trò chơi 
+        self.game_started = False                    
 
     def game_over(self):
         self.snake.reset()
@@ -118,10 +120,25 @@ class Game:
         pygame.draw.rect(screen, GREEN, popup_rect, 0, 10)
         pygame.draw.rect(screen, DARK_GREEN, popup_rect, 5, 10)
 
-        # Màn hình bắt đầu ban đầu
-        start_text = popup_font.render("Press SPACE to Start", True, DARK_GREEN)
-        start_rect = start_text.get_rect(center=(window_size // 2, window_size // 2))
-        screen.blit(start_text, start_rect)
+        # Văn bản dựa trên trạng thái trò chơi
+        if not self.game_started:
+            # Màn hình bắt đầu ban đầu
+            start_text = popup_font.render("Press SPACE to Start", True, DARK_GREEN)
+            start_rect = start_text.get_rect(center=(window_size // 2, window_size // 2))
+            screen.blit(start_text, start_rect)
+        else:
+            # Màn hình Kết thúc trò chơi
+            game_over_text = popup_font.render("Game Over", True, DARK_GREEN)
+            score_text = popup_font.render(f"Score: {self.score}", True, DARK_GREEN)
+            play_again_text = popup_font.render("Press SPACE to Play Again", True, DARK_GREEN)
+
+            game_over_rect = game_over_text.get_rect(center=(window_size // 2, window_size // 2 - 2 * cell_size))
+            score_rect = score_text.get_rect(center=(window_size // 2, window_size // 2))
+            play_again_rect = play_again_text.get_rect(center=(window_size // 2, window_size // 2 + 2 * cell_size))
+
+            screen.blit(game_over_text, game_over_rect)
+            screen.blit(score_text, score_rect)
+            screen.blit(play_again_text, play_again_rect)
 
     def draw_board(self):
         screen.fill(GREEN)
@@ -161,6 +178,7 @@ class Game:
         if event.type == pygame.KEYDOWN:
             if self.state == "STOPPED" and event.key == pygame.K_SPACE:
                 self.state = "RUNNING"
+                self.game_started = True  # Đánh dấu trò chơi đã bắt đầu
                 self.score = 0  # Đặt lại điểm số khi bắt đầu trò chơi mới
             if event.key == pygame.K_UP and self.snake.direction != (0, 1):
                 self.snake.direction = (0, -1)
