@@ -2,6 +2,7 @@ import os
 import random
 import time
 import platform
+import sys
 from pynput import keyboard
 
 # Cài đặt trò chơi
@@ -19,6 +20,11 @@ FRAME_RATE = 30
 FRAME_TIME = 1.0 / FRAME_RATE
 MOVES_PER_SECOND = 5
 FRAMES_PER_MOVE = FRAME_RATE // MOVES_PER_SECOND  # Số khung hình giữa các lần di chuyển của rắn
+
+# Hàm gotoxy để di chuyển con trỏ
+def gotoxy(x, y):
+    sys.stdout.write(f"\033[{y};{x}H")
+    sys.stdout.flush()
 
 class Snake:
     def __init__(self, body=[(5, 5)], direction=(1, 0)):
@@ -68,6 +74,7 @@ class Game:
         self.current_keys = set()  # Lưu trữ trạng thái phím
         self.listener = None  # Listener cho pynput
         self.frame_count = 0  # Đếm số khung hình để kiểm soát di chuyển
+        self.previous_board = []  # Lưu trạng thái trước để tối ưu hóa vẽ
 
     @staticmethod
     def clear_screen():
@@ -77,25 +84,50 @@ class Game:
         else:
             os.system('clear')
 
-    def draw_board(self):
-        # Vẽ bảng trò chơi
+    def initialize_board(self):
+        # Khởi tạo bảng lần đầu
         self.clear_screen()
         print(WALL_CHAR * (WIDTH + 2))  # In tường trên
         for y in range(HEIGHT):
-            row = WALL_CHAR  # Bắt đầu hàng với tường
-            for x in range(WIDTH):
-                if (x, y) == self.snake.body[0]:
-                    row += HEAD_CHAR  # Vẽ đầu rắn
-                elif (x, y) in self.snake.body:
-                    row += SNAKE_CHAR  # Vẽ thân rắn
-                elif (x, y) == self.food.position:
-                    row += FOOD_CHAR  # Vẽ thức ăn
-                else:
-                    row += EMPTY_CHAR  # Vẽ ô trống
-            row += WALL_CHAR  # Kết thúc hàng với tường
-            print(row)
+            print(WALL_CHAR + EMPTY_CHAR * WIDTH + WALL_CHAR)
         print(WALL_CHAR * (WIDTH + 2))  # In tường dưới
-        print(f"Điểm: {self.score}")  # In điểm số
+        print(f"Điểm: {self.score}")
+        self.previous_board = [(x, y) for x in range(WIDTH) for y in range(HEIGHT)]
+
+    def draw_board(self):
+        # Vẽ bảng trò chơi
+        current_board = set()
+        # Vẽ đầu rắn
+        head_x, head_y = self.snake.body[0]
+        gotoxy(head_x + 2, head_y + 2)
+        sys.stdout.write(HEAD_CHAR)
+        current_board.add((head_x, head_y))
+        
+        # Vẽ thân rắn
+        for x, y in self.snake.body[1:]:
+            gotoxy(x + 2, y + 2)
+            sys.stdout.write(SNAKE_CHAR)
+            current_board.add((x, y))
+        
+        # Vẽ thức ăn
+        food_x, food_y = self.food.position
+        gotoxy(food_x + 2, food_y + 2)
+        sys.stdout.write(FOOD_CHAR)
+        current_board.add((food_x, food_y))
+        
+        # Xóa các ô không còn là rắn hoặc thức ăn
+        for x, y in self.previous_board:
+            if (x, y) not in current_board and (x, y) not in [(food_x, food_y)]:
+                gotoxy(x + 2, y + 2)
+                sys.stdout.write(EMPTY_CHAR)
+        
+        # Cập nhật điểm số
+        gotoxy(1, HEIGHT + 3)
+        sys.stdout.write(f"Điểm: {self.score}")
+        sys.stdout.flush()
+        
+        # Lưu trạng thái hiện tại
+        self.previous_board = current_board
 
     def update_state(self):
         # Cập nhật trạng thái trò chơi
@@ -179,6 +211,7 @@ class Game:
 def main():
     game = Game()
     game.start_listener()
+    game.initialize_board()  # Khởi tạo bảng lần đầu
 
     last_time = time.perf_counter()
 
