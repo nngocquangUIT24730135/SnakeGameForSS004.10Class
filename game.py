@@ -6,26 +6,27 @@ import sys
 # Khởi tạo pygame
 pygame.init()
 
-title_font = pygame.font.Font(None, 40)
-score_font = pygame.font.Font(None, 40)
-popup_font = pygame.font.Font(None, 40)
+TITLE_FONT = pygame.font.Font(None, 40)
+SCORE_FONT = pygame.font.Font(None, 40)
+POPUP_FONT = pygame.font.Font(None, 40)
 
 GREEN = (80, 200, 120)
 DARK_GREEN = (6, 64, 43)
 HEAD_COLOR = (45, 104, 196)
 
-cell_size = 30
-number_of_cells = 15
-WIDTH = number_of_cells
-HEIGHT = number_of_cells
+CELL_SIZE = 30
+NUMBER_OF_CELLS = 15
+WIDTH = NUMBER_OF_CELLS
+HEIGHT = NUMBER_OF_CELLS
 
 OFFSET = 75
-eat_sound = pygame.mixer.Sound("Sounds/eat.mp3")
-wall_hit_sound = pygame.mixer.Sound("Sounds/wall.mp3")
-food_surface = pygame.image.load("Graphics/food.png")
+EAT_SOUND = pygame.mixer.Sound("Sounds/eat.mp3")
+WALL_HIT_SOUND = pygame.mixer.Sound("Sounds/wall.mp3")
+FOOD_SURFACE = pygame.image.load("Graphics/food.png")
 SNAKE_UPDATE = pygame.USEREVENT
+
 pygame.time.set_timer(SNAKE_UPDATE, 200)
-screen = pygame.display.set_mode((2*OFFSET + cell_size*number_of_cells, 2*OFFSET + cell_size*number_of_cells))
+screen = pygame.display.set_mode((2*OFFSET + CELL_SIZE*NUMBER_OF_CELLS, 2*OFFSET + CELL_SIZE*NUMBER_OF_CELLS))
 pygame.display.set_caption("Snake loves money")
 clock = pygame.time.Clock() 
 
@@ -41,7 +42,7 @@ class Snake:
     def draw(self):
         for index, segment in enumerate(self.body):
             x, y = segment
-            segment_rect = (OFFSET + x * cell_size, OFFSET+ y * cell_size, cell_size, cell_size)
+            segment_rect = (OFFSET + x * CELL_SIZE, OFFSET+ y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
             color = HEAD_COLOR if index == 0 else DARK_GREEN
             pygame.draw.rect(screen, color, segment_rect, 0, 7)
 
@@ -72,9 +73,9 @@ class Food:
 
     def draw(self):
         x, y = self.position
-        food_rect = pygame.Rect(OFFSET + x * cell_size, OFFSET + y * cell_size, 
-            cell_size, cell_size)
-        screen.blit(food_surface, food_rect)
+        food_rect = pygame.Rect(OFFSET + x * CELL_SIZE, OFFSET + y * CELL_SIZE, 
+            CELL_SIZE, CELL_SIZE)
+        screen.blit(FOOD_SURFACE, food_rect)
 
     def spawn(self, snake_body):
         # Tạo vị trí mới cho thức ăn
@@ -97,11 +98,11 @@ class Game:
         self.snake.reset()
         self.food.spawn(self.snake.body)
         self.state = "STOPPED"
-        wall_hit_sound.play()
+        WALL_HIT_SOUND.play()
         
     def draw_popup(self):
         # Tính toán kích thước cửa sổ bật lên
-        window_size = 2 * OFFSET + cell_size * number_of_cells
+        window_size = 2 * OFFSET + CELL_SIZE * NUMBER_OF_CELLS
         popup_width = int(window_size * 2 / 3)  # ~600 pixels
         popup_height = int(window_size * 0.35)  # ~315 pixels
 
@@ -123,18 +124,18 @@ class Game:
         # Văn bản dựa trên trạng thái trò chơi
         if not self.game_started:
             # Màn hình bắt đầu ban đầu
-            start_text = popup_font.render("Press SPACE to Start", True, DARK_GREEN)
+            start_text = POPUP_FONT.render("Press SPACE to Start", True, DARK_GREEN)
             start_rect = start_text.get_rect(center=(window_size // 2, window_size // 2))
             screen.blit(start_text, start_rect)
         else:
             # Màn hình Kết thúc trò chơi
-            game_over_text = popup_font.render("Game Over", True, DARK_GREEN)
-            score_text = popup_font.render(f"Score: {self.score}", True, DARK_GREEN)
-            play_again_text = popup_font.render("Press SPACE to Play Again", True, DARK_GREEN)
+            game_over_text = POPUP_FONT.render("Game Over", True, DARK_GREEN)
+            score_text = POPUP_FONT.render(f"Score: {self.score}", True, DARK_GREEN)
+            play_again_text = POPUP_FONT.render("Press SPACE to Play Again", True, DARK_GREEN)
 
-            game_over_rect = game_over_text.get_rect(center=(window_size // 2, window_size // 2 - 2 * cell_size))
+            game_over_rect = game_over_text.get_rect(center=(window_size // 2, window_size // 2 - 2 * CELL_SIZE))
             score_rect = score_text.get_rect(center=(window_size // 2, window_size // 2))
-            play_again_rect = play_again_text.get_rect(center=(window_size // 2, window_size // 2 + 2 * cell_size))
+            play_again_rect = play_again_text.get_rect(center=(window_size // 2, window_size // 2 + 2 * CELL_SIZE))
 
             screen.blit(game_over_text, game_over_rect)
             screen.blit(score_text, score_rect)
@@ -143,13 +144,13 @@ class Game:
     def draw_board(self):
         screen.fill(GREEN)
         pygame.draw.rect(screen, DARK_GREEN, 
-            (OFFSET-5, OFFSET-5, cell_size*number_of_cells + 10, cell_size*number_of_cells + 10), 5)
+            (OFFSET-5, OFFSET-5, CELL_SIZE*NUMBER_OF_CELLS + 10, CELL_SIZE*NUMBER_OF_CELLS + 10), 5)
         self.snake.draw()
         self.food.draw()
-        title_surface = title_font.render("Snake loves money", True, DARK_GREEN)
-        score_surface = score_font.render(str(self.score), True, DARK_GREEN)
+        title_surface = TITLE_FONT.render("Snake loves money", True, DARK_GREEN)
+        score_surface = SCORE_FONT.render(str(self.score), True, DARK_GREEN)
         screen.blit(title_surface, (OFFSET-5, 20))
-        screen.blit(score_surface, (OFFSET-5, OFFSET + cell_size*number_of_cells + 10))
+        screen.blit(score_surface, (OFFSET-5, OFFSET + CELL_SIZE*NUMBER_OF_CELLS + 10))
         
         if self.state == "STOPPED":
             self.draw_popup()
@@ -171,6 +172,7 @@ class Game:
 
         # Cập nhật nếu ăn thức ăn
         if ate_food:
+            EAT_SOUND.play() # âm thanh
             self.score += 1  # Tăng điểm
             self.food.spawn(self.snake.body)  # Tạo thức ăn mới
 
